@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+  <h1>Учет активов</h1>
+    <h2>Все ваши активы</h2>
+      <ul>
+        {% for asset in assets %}
+        <li><a href="{{ url_for('get_asset', asset_id=asset['id']) }}">{{ asset['name'] }}-{{ asset['date'] }}</a></li>
+        {% endfor %}
+      </ul>
+<p></p>
+<hr>
+  <a href="{{ url_for('new_asset') }}"><button>Добавить новый актив</button></a>
+  <!-- <a href="{{ url_for('index') }}"><button>Refresh</button></a>-->
+<hr>
+<p>Выберите дату для отображения активов</p>
+    <!-- Month Picker Input -->
+    <input class="js-monthpicker" type="hidden" onchange="select_assets_for_date()">
+
+    <!-- Alternative Input (The selected month/year will be placed here) -->
+    <input type="text"   id="monthpick"/>
+
+<ul id="filter_assets">
+</ul>
+<div id="chartContainer" style="height: 300px; width: 100%;">
+</div>{% endblock %}
+
+{% block monthpicker %}
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <script type="text/javascript" src="/static/js/monthpicker.js"></script>
+    <script type="text/javascript" src="https://cdn.canvasjs.com/canvasjs.min.js"></script>
+    <script>
+        $(function(){
+            $('.js-monthpicker').monthpicker();
+        });
+    </script>
+    <script>
+        async function select_assets_for_date() {
+            var request_date = document.getElementById("monthpick").value;
+            var request_data = JSON.stringify({
+            "date": request_date
+            })
+            console.log(request_data)
+            var response = await fetch('request_assets', {
+                method: "FETCH",
+                body: request_data,
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+            var response_data = await response.json()
+            console.log(response_data)
+            var ul = document.getElementById("filter_assets");
+            $(ul).empty(); //очищаем список из активов через jquery, не нашла как через js это сделать
+            var data_arr = []
+            response_data.forEach((element) => {
+                console.log(element)
+                var li = document.createElement("li");
+                li.appendChild(document.createTextNode("Актив: "+element[1]+" стоимостью - "+element[2]));
+                ul.appendChild(li);
+                data_arr.push({y:element[2], indexLabel:element[1]})
+
+            });
+            console.log(data_arr);
+
+            var chart = new CanvasJS.Chart("chartContainer",
+        {
+          title:{
+            text: "Диаграмма распределения активов"
+          },
+          data: [
+          {
+           type: "doughnut",
+           dataPoints: data_arr
+         }
+         ]
+       });
+        chart.render();
+        }
+
+
+    </script>
+<script>
+    function myFunction() {
+      var x = document.getElementById("container");
+      if (x.style.display === "none") {
+        x.style.display = "block";
+      } else {
+        x.style.display = "none";
+      }
+}</script>
+{% endblock %}
+{% block donut %}
+    <script src="https://cdn.anychart.com/releases/8.10.0/js/anychart-core.min.js"></script>
+    <script src="https://cdn.anychart.com/releases/8.10.0/js/anychart-pie.min.js"></script>
+    <style type="text/css">
+      html, body, #container {
+        width: 100%; height: 100%; margin: 0; padding: 0;
+      }
+    </style>
+{% endblock %}

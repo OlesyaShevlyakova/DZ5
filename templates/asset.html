@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ asset.name }}</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/asset_style.css')}}">
+
+</head>
+<body>
+    <h1>Информация об активе</h1>
+    <h3>Наименование</h3>
+    <p>{{ asset.name }}</p>
+    <h3>Стоимость</h3>
+    <p>{{ asset.amount }}</p>
+    <h3>Дата</h3>
+    <p>{{ asset.date }}</p>
+    <hr>
+    <div class="back">
+    <a href="{{ url_for('index') }}">Назад к главному окну</a>
+    </div>
+    <hr>
+    <div>
+        <form method="post">
+            <input type="submit" value="Удалить актив">
+        </form>
+    </div>
+</body>
+</html>

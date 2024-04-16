@@ -1,0 +1,13 @@
+
+p {
+  border: 2px solid powderblue;
+  padding: 10px;
+  margin: 10px;
+
+}
+.back {
+     display: inline-block;
+     margin-left: 600px;
+}
+a { float: center;}
+form {float: right;}

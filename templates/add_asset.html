@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <script type="text/javascript" src="/static/js/monthpicker.js"></script>
+    <script>
+        $(function(){
+            $('.js-monthpicker').monthpicker();
+        });
+    </script>
+  <h1>Добавить новый актив</h1>
+  <form method="post">
+    <select id="AssetSelect" name="AssetSelect">
+        <option value="Рубли">Рубли</option>
+        <option value="Доллары">Доллары</option>
+        <option value="Золото">Золото</option>
+        <option value="Облигации">Облигации</option>
+        <option value="Акции">Акции</option>
+    </select>
+    <p></p>
+    <label for="amount">Стоимость</label><br>
+    <input required type="number" min="1" step="1" id="amount" name="amount"><br>
+    <p></p>
+    <label for="monthpick">Дата (Месяц-Год)</label><br>
+    <!-- Month Picker Input -->
+    <input class="js-monthpicker" type="hidden">
+    <!-- Alternative Input (The selected month/year will be placed here) -->
+    <input required type="text"   id="monthpick" name="monthpick"/>
+    <p></p>
+    <input type="submit" value="Добавить">
+  </form>
+{% endblock %}
