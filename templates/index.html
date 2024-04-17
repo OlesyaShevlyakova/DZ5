@@ -54,19 +54,18 @@
                 }
             })
             var response_data = await response.json()
-            console.log(response_data)
+            response_data = response_data['data']
+            response_data = JSON.parse(response_data)
             var ul = document.getElementById("filter_assets");
             $(ul).empty(); //очищаем список из активов через jquery, не нашла как через js это сделать
             var data_arr = []
             response_data.forEach((element) => {
-                console.log(element)
                 var li = document.createElement("li");
                 li.appendChild(document.createTextNode("Актив: "+element[1]+" стоимостью - "+element[2]));
                 ul.appendChild(li);
                 data_arr.push({y:element[2], indexLabel:element[1]})
 
             });
-            console.log(data_arr);
 
             var chart = new CanvasJS.Chart("chartContainer",
         {

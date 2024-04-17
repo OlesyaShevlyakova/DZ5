@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for
 from database import *
+from json import dumps
 
 app = Flask(__name__)
 
@@ -14,19 +15,16 @@ def index():
 
 @app.route('/<int:asset_id>', methods=['GET', 'POST'])
 def get_asset(asset_id):
-    if request.method != 'POST':
-        """Вовзращаем информацию об конкретном активе"""
+
+    if request.method != 'POST':  # Возвращаем информацию об конкретном активе
         conn = get_db_connection()
         asset = conn.execute('SELECT * FROM assets WHERE id = ?', (asset_id,)).fetchone()
         conn.close()
         return render_template('asset.html', asset=asset)
-    elif request.method == 'POST':
-        """ Удаляем выбранный актив"""
+    elif request.method == 'POST':  # Удаляем выбранный актив
         conn = get_db_connection()
-        print(asset_id)
-        asset = conn.execute('DELETE FROM assets WHERE id = ?', (asset_id,))
+        conn.execute('DELETE FROM assets WHERE id = ?', (asset_id,))
         conn.commit()
-        print(asset)
         conn.close()
         return redirect(url_for('index'))
 
@@ -34,7 +32,7 @@ def get_asset(asset_id):
 @app.route('/new', methods=['GET', 'POST'])
 def new_asset():
     """Добавляем новый актив"""
-    if request.method == 'POST':
+    if request.method == 'POST':  # Если пришел метод пост, то надо добавить новый актив и вернуть на первую страницу
         assetselect = request.form['AssetSelect']
         amount = request.form['amount']
         mothpick = request.form['monthpick']
@@ -53,9 +51,9 @@ def request_assets():
     conn = get_db_connection()
     requested_assets: sqlite3.Row = conn.execute('SELECT * FROM assets WHERE date = ?', (asset_date,)).fetchall()
     conn.close()
-    requested_assets = list(requested_assets)
     requested_assets = [tuple(asset) for asset in requested_assets]
-    return requested_assets
+    requested_assets = dumps(requested_assets)
+    return {'data': requested_assets}  # Заносим в словарь, так как на pythonanywhere ошибки, что мы возвращаем list
 
 
 if __name__ == '__main__':
