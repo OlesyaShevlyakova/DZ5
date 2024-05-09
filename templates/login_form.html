@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Авторизация</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/login_form.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/registration_form.css')}}">
+  <script>
+    $(function() {
+    // setTimeout() function will be fired after page is loaded
+    // it will wait for 5 sec. and then will fire
+    // $(".message_flash").hide() function
+      setTimeout(function() {
+          $(".message_flash").hide('blind', {}, 500)
+      }, 5000);
+    })
+  </script>
+
+</head>
+<body>
+  <form method="post">
+    <div class="imgcontainer">
+      <img src="static/img/img_avatar2.png" alt="Avatar" class="avatar">
+    </div>
+
+    <div class="container">
+      <label for="uname"><b>Имя</b></label>
+      <input type="text" placeholder="Введите имя" name="login_name" required>
+      <br>
+      <label for="psw"><b>Пароль</b></label>
+      <input type="password" placeholder="Введите пароль" name="login_psw" required>
+      <br>
+      <button type="submit" name="submit_button" value="login">Войти</button>
+      <br>
+      <label>
+        <input type="checkbox" checked="checked" name="remember"> Запомнить меня
+      </label>
+    </div>
+
+    <div class="container">
+      <button class="regbtn" onclick="document.getElementById('id01').style.display='block'">Регистрация</button>
+    </div>
+    <div class="err_msg" style="background-color:#f1f1f1">
+          <p>{{msg_err}}</p>
+    </div>
+  </form>
+
+<!-- Модальная форма  -->
+<div id="id01" class="modal">
+  <span onclick="document.getElementById('id01').style.display='none'" class="close" title="Close Modal">X</span>
+  <form class="modal-content" method="post">
+    <div class="container">
+      <h1>Регистрация</h1>
+      <p>Заполните логин и пароль</p>
+      <hr>
+        <div class="container">
+          <label for="email"><b>Имя</b></label>
+          <input type="text" placeholder="Введите имя" name="reg_name" required>
+          <br>
+          <label for="psw"><b>Пароль</b></label>
+          <input type="password" placeholder="Введите пароль" name="reg_psw" required>
+        </div>
+      <label>
+        <input type="checkbox" checked="checked" name="remember" style="margin-bottom:15px"> Запомнить меня
+      </label>
+
+      <div class="clearfix">
+        <button type="submit" class="signup" name="submit_button" value="reg">Зарегистрироваться</button>
+        <br>
+        <button type="button" onclick="document.getElementById('id01').style.display='none'" class="cancelbtn">Отмена</button>
+      </div>
+    </div>
+  </form>
+</div>
+</body>
+</html>

@@ -3,7 +3,15 @@
 
 {% block title %}Home{% endblock %}
 
+{% block user_info %}
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/index_form.css')}}">
+{% endblock %}
+
 {% block content %}
+<div class="current_user">
+    <label>Текущий пользователь: {{current_user}}</label>
+    <a href="{{ url_for('logout') }}"><button type="button" class="logout" style="background-color:#f1f1f1">X</button></a>
+</div>
   <h1>Учет активов</h1>
     <h2>Все ваши активы</h2>
       <ul>
@@ -14,7 +22,6 @@
 <p></p>
 <hr>
   <a href="{{ url_for('new_asset') }}"><button>Добавить новый актив</button></a>
-  <!-- <a href="{{ url_for('index') }}"><button>Refresh</button></a>-->
 <hr>
 <p>Выберите дату для отображения активов</p>
     <!-- Month Picker Input -->
@@ -29,11 +36,11 @@
 </div>{% endblock %}
 
 {% block monthpicker %}
-    <link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/jquery-ui.css')}}">
+    <script type="text/javascript" src="/static/js/jquery-3.6.0.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-ui.js"></script>
     <script type="text/javascript" src="/static/js/monthpicker.js"></script>
-    <script type="text/javascript" src="https://cdn.canvasjs.com/canvasjs.min.js"></script>
+    <script type="text/javascript" src="/static/js/canvasjs.min.js"></script>
     <script>
         $(function(){
             $('.js-monthpicker').monthpicker();
@@ -95,8 +102,8 @@
 }</script>
 {% endblock %}
 {% block donut %}
-    <script src="https://cdn.anychart.com/releases/8.10.0/js/anychart-core.min.js"></script>
-    <script src="https://cdn.anychart.com/releases/8.10.0/js/anychart-pie.min.js"></script>
+    <script type="text/javascript" src="/static/js/anychart-core.min.js"></script>
+    <script type="text/javascript" src="/static/js/anychart-pie.min.js"></script>
     <style type="text/css">
       html, body, #container {
         width: 100%; height: 100%; margin: 0; padding: 0;

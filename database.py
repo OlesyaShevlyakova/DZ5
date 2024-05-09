@@ -1,5 +1,9 @@
 import sqlite3
 
+"""
+Реализация обращения к БД используя SQL-язык.
+"""
+
 
 def get_db_connection():
     conn = sqlite3.connect('database.db')
@@ -13,6 +17,6 @@ def close_db_connection(conn):
 
 def init_db():
     conn = get_db_connection()
-    conn.execute('CREATE TABLE IF NOT EXISTS assets (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, amount INTEGER NOT NULL, date NOT NULL)')
+    #conn.execute('CREATE TABLE IF NOT EXISTS assets (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, amount INTEGER NOT NULL, date NOT NULL)')
     conn.commit()
     conn.close()
