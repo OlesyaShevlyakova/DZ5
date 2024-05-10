@@ -110,7 +110,8 @@ def request_assets():
     """Запрос активов по выбранной дате"""
     asset_date = request.json['date']
     conn = get_db_connection()
-    requested_assets: sqlite3.Row = conn.execute('SELECT * FROM assets WHERE date = ?', (asset_date,)).fetchall()
+    requested_assets: sqlite3.Row = conn.execute('SELECT * FROM assets WHERE date = ? and id_user = ?',
+                                                 (asset_date, session['id_user'])).fetchall()
     conn.close()
     requested_assets = [tuple(asset) for asset in requested_assets]
     requested_assets = dumps(requested_assets)
@@ -129,6 +130,6 @@ if __name__ == '__main__':
     app.config["SESSION_PERMANENT"] = False
 
     with app.app_context():
-        init_db() # создаем таблицы на чистом SQL подходе
+        #init_db() # создаем таблицы на чистом SQL подходе
         init_db_alch() # создаем таблицы на SQLAclhemy подходе
     app.run(debug=True)
