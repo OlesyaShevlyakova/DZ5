@@ -4,16 +4,27 @@ from utils import hash_password
 
 """
 Реализация обращения к БД через SQL Alchemy.
+Сложность с которой столкнулась - пришлось сначала делать описание по модели SQL Alchemy 1.4 вида:
+class Parent(Base):
+    __tablename__ = 'parent'
+    id = Column(Integer, primary_key=True)
+    children = relationship("Child")
+Так как не смогла сходу понять что за модель декларативная модель ORM у версии 2.0
+После этого, по документации "SQLAlchemy 2.0 - Major Migration Guide"
+https://docs.sqlalchemy.org/en/20/changelog/migration_20.html
+Выполнила миграпцию описания к модели версии 2.0 представленной в коде ниже
 """
 
 
+# Создаем базовый класс наследующийся от класса описания объеквто декларативным подходом
 class Base(DeclarativeBase):
     pass
 
 
 class UsersTable(Base):
     """
-    Таблица хранения информации о пользователях
+    Наследуем от базового декларативного класса
+    Создаем таблицу хранения информации о пользователях
     Пароль хранится в хешированном виде
     """
     __tablename__ = 'users'
@@ -27,6 +38,10 @@ class UsersTable(Base):
 
 
 class AssetsTable(Base):
+    """
+    Наследуем от базового декларативного класса
+    Создаем таблицу хранения информации об активах
+    """
     __tablename__ = 'assets'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -41,11 +56,17 @@ class AssetsTable(Base):
 
 
 def init_db_alch():
-    current_engine = get_db_alch()
-    Base.metadata.create_all(current_engine)
+    """
+    Первичная инициализация БД
+    """
+    current_engine = get_db_alch()  # отекрываем подключение к БД
+    Base.metadata.create_all(current_engine)  # создаем объекты, если они в БД остутствуют
 
 
 def get_db_alch():
+    """
+    Функция установуки подключения к нашей БД
+    """
     current_engine = create_engine('sqlite:///database.db', echo=True)
     return current_engine
 
@@ -53,17 +74,19 @@ def get_db_alch():
 def reg_user(login: str, password: str) -> tuple[bool, str]:
     """
     Регистрация пользователя
-    Возвращаем обратно False - если есть ошибка и True если её не было
+    На вход принимаем логин и пароль
+    Возвращаем обратно тюпл из False - если есть ошибка или True если её не было
+    и строки с текстом ошибки
     """
     current_engine = get_db_alch()
     with (Session(current_engine) as session):
-        # сначала проверим, что логи свободен
+        # сначала проверим, что логин свободен
         stmt = select(UsersTable).where(UsersTable.name == login)
         result = session.execute(stmt)
         result = result.all()
-        if len(result) != 0: # значит что-то нашли
+        if len(result) != 0:  # значит что-то нашли
             return False, 'Такой логин уже присутствует'
-        else:  # значит логин свободен
+        else:  # иначе значит логин свободен
             new_user = UsersTable(
                 name=login,
                 password=hash_password(password)

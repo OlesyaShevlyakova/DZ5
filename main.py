@@ -1,23 +1,27 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session
 from database import *
 from json import dumps
 from db_alchemy import *
 from utils import read_secret_key
 
-app = Flask(__name__)
+app = Flask(__name__)  # создаем объект от класса фласк
 
 
 @app.route('/')
 def index():
     """
-    Главная форма отображения активов
+    Главная форма отображения активов.
     """
-    if 'username' in session: # проверка, что есть сессия для пользователя
-        conn = get_db_connection()
+    if 'username' in session:  # проверка, что ключ имя пользователя присутсвует в словаре хранения сессий
+        conn = get_db_connection()  # создание подключения к базе данных
+        # получаем все активы, которые пренадлежат текущему пользователю
+        # не стала переделывать на SQL Alchemy, чтобы продемонстрировать оба подхода обращения к БД
         assets = conn.execute("SELECT * FROM assets where id_user='%s'" % session['id_user']).fetchall()
-        conn.close()
+        conn.close()  # закрываем подключение к БД
+        # обратно возвращаем генерацию страницы и во входящих параметрах передаем список активов и текущего пользователя
+        # список активов отображаем на основной странице, а логин пользователя в правом верхнем углу
         return render_template('index.html', assets=assets, current_user=session['username'])
-    else: # если сессии нет, то перекидываем на страницу логина
+    else:  # если в словаре сессий не нашли ключа, что есть пользователь, значит перекидываем на форму логина
         return redirect(url_for('login_form'))
 
 
@@ -25,28 +29,47 @@ def index():
 @app.route('/<int:asset_id>', methods=['GET', 'POST'])
 def get_asset(asset_id):
     """
-    Возвращаем информацию об конкретном активе
+    Функция возврата подробной информации о конкретном активе.
+    В качестве входящего парметра принимается идентификатор актива из поля id таблицы актвов в БД
+    Так же указываем допустимые методы обращения к данной функции:
+    GET - получение данных
+    POST - используется для удаления отображаемого актива
     """
-    if request.method == 'GET':  # Если получение информации, то из базы берем актив
-        conn = get_db_connection()
+    if request.method == 'GET':  # Если запрос пришел вида GET, то есть получение информации, то из базы берем конкретный актив
+        conn = get_db_connection()  # открываем подключение
+        # получаем конкретный актив из БД, который пренадлежат текущему пользователю
+        # на вход подаем айди актива и айди текущего пользователя из словаря сессий
+        # не стала переделывать на SQL Alchemy, чтобы продемонстрировать оба подхода обращения к БД
         asset = conn.execute('SELECT * FROM assets WHERE id = ? and id_user = ?',
                              (asset_id, session['id_user'])).fetchone()
-        conn.close()
+        conn.close()  # закрываем подключение
+        # обратно возвращаем генерацию страницы и во входящих параметрах передаем инфорацию об активе
         return render_template('asset.html', asset=asset)
-    elif request.method == 'POST':  # Удаляем выбранный актив
-        conn = get_db_connection()
+    elif request.method == 'POST':  # Если пришел метод POST, то будем удалять актив
+        conn = get_db_connection()  # открываем подключение
+        # удаляем из базы актив
+        # на вход подаем айди актива и айди текущего пользователя из словаря сессий
+        # не стала переделывать на SQL Alchemy, чтобы продемонстрировать оба подхода обращения к БД
         conn.execute('DELETE FROM assets WHERE id = ? and id_user = ?',
                      (asset_id,session['id_user']))
-        conn.commit()
-        conn.close()
+        conn.commit() # подвтерждаем транзакцию в БД, чтобы изменения данных применились.
+        conn.close() # закрываем подключение
+        # после удаления перенаправляем на главную страницу
         return redirect(url_for('index'))
 
 
 @app.route('/logout', methods=['GET'])
 def logout():
-    session.clear()
+    """Функция обработки выхода из приложения.
+    Основное - необхоидмо удалить текущую сессию о залогиненном пользователе.
+    То есть, очистить словарь с данными о пользователе
+    """
+    session.clear()  # очищаем словарь с данными о залогиненном пользователе
+    # принудительно устаналиваем флаг, что сессия изменилась, чтобы фласк точно передал измененный словарь
+    # session в следующий запрос
     if not session.modified:
         session.modified = True
+    # перенаправляем на форму логина
     return redirect(url_for('login_form'))
 
 
@@ -54,82 +77,147 @@ def logout():
 def login_form():
     """
     Обработка формы логина и регистрации
-    В request.form['submit_button'] прописывается была попытка логина или регистрации
+    На вход принимаем два метода:
+    GET - отображение формы
+    POST - авторизация или регистрация
+    Так как форма регистрации не является отдельной страницей, а реализована как модальная форма на странице логина
+    То в html странице читаем параметр submit_button - request.form['submit_button']
+    , где пишем была попытка логина или регистрации
     """
     # Если пришел метод пост и нажата кнопка логина, то делаем авторизацию
     if request.method == 'POST' and request.form['submit_button'] == 'login':
-        # Получаем с формы все входящие параметры
+        # Получаем с формы все входящие параметры логина
         login = request.form['login_name']
         password = request.form['login_psw']
         # поставил пользователь галочку запомнить его или нет
+        # если галочка не стоит, то такого поля просто нет на форме,
+        # а если стоит, то оно есть на форме
+        # поэтому проверяем наличие этого поля
         if 'remember' in request.form:
             permanent = True
         else:
             permanent = False
 
-        session.permanent = permanent # настройка перманентности сессии
+        # в зависимости от того была галочка поставлена запомнить его или нет,
+        # настраиваем перманентности сессии, отвечающей за то будет ли пользователю сохранена
+        # сессия после закрытия браузера или ему придется заново логиниться после закрытия браузера
+        session.permanent = permanent
 
-        is_user_exist, id_user = check_user(login, password) # проверяем есть ли в БД запрашиваемый логин\пароль
-        if not is_user_exist:  # не нашли пользователя, обновляем форму и выводим сообщение что не нашли логин\пароль
+        # вызываем фунцию из db_alchemy,
+        # которая проверяет есть ли в БД запрашиваемый логин\пароль
+        # получаем булиновское есть пользовмтель или нет и айди пользователя
+        is_user_exist, id_user = check_user(login, password)
+
+        # не нашли пользователя, обновляем форму и выводим сообщение что не нашли логин\пароль
+        # в параметр msg_err который если не пустой будет отображатсья на форме
+        if not is_user_exist:
             return render_template(
                 'login_form.html',
                 msg_err="Пользователь и пароль не совпадают или не существуют"
             )
-        else:  # удачная авторизация, записываем в сессию его логин
+        # удачная авторизация, записываем в словарь сесси логин и идентификатор пользователя
+        # и перводим на главную страницу
+        else:
             session['username'] = login
             session['id_user'] = id_user
             return redirect(url_for('index'))
+
     # Если пришел метод пост и нажата кнопка регистрации, то делаем регистрацию
     elif request.method == 'POST' and request.form['submit_button'] == 'reg':
+        # Получаем с формы все входящие параметры регистрации
         login = request.form['reg_name']
         password = request.form['reg_psw']
+
+        # вызываем фунцию из db_alchemy,
+        # которая проверяет добавляет в БД запрашиваемый логин\пароль
+        # получаем булиновское есть добавили или нет и сообщение с ошибкой
         success, msg = reg_user(login, password)
-        if not success:  # не удалось добавить пользователя
-            return render_template('login_form.html', msg_err=msg)
-        else:  # удалось добавить пользователя
-            return render_template('login_form.html', msg_err=msg)
-    else:  # к нам пришел не Post метод, значит просто страницу ему отображаем
+
+        # Генерируем страницу логина и в параметр msg_err передаем удалось добавить пользователя или случилась ошибка
+        return render_template('login_form.html', msg_err=msg)
+
+    # к нам пришел не Post метод, значит GET, тогда просто отображаем страницу логина
+    # и в параметр msg передаем пусто, так как нет никаких ошибок для отображения
+    else:
         return render_template('login_form.html', msg_err="")
+    # Сложность с которой столкнулась - у меня не заработал из фласка функционал flash, то есть отображение
+    # дополнительных окно. хотела их использовать для отображения ошибок логина и регистрации
+    # пришлось делать через параметр msg_err, который на html странице изначально пустой
 
 
 @app.route('/new', methods=['GET', 'POST'])
 def new_asset():
-    """Добавляем новый актив"""
-    if request.method == 'POST':  # Если пришел метод пост, то надо добавить новый актив и вернуть на первую страницу
+    """
+    Функция добавления нового актива
+    На вход принимаем два метода:
+    GET - отображение формы добавления актива
+    POST - добавление актива в БД
+    """
+    # Если пришел метод пост, то надо добавить новый актив в БД и перенаправить на главную страницу
+    if request.method == 'POST':
+        # получаем с формы из полей данные об активе
         assetselect = request.form['AssetSelect']
         amount = request.form['amount']
         mothpick = request.form['monthpick']
-        # вызываем фукнция добавления актива
+        # вызываем фунцию из db_alchemy,
+        # которая добавляет в БД новый актив
+        # в качестве парметров передаем данные актива и из словаря сесси айди пользоватеоя
         add_asset(assetselect, amount, mothpick, session['id_user'])
+        # возвращаем на галвную страницу
         return redirect(url_for('index'))
-    return render_template('add_asset.html')
+    # Если пришел не метод POST, значит GET, значит просто отображаем форму
+    else:
+        return render_template('add_asset.html')
 
 
 @app.route("/request_assets", methods=["FETCH"])
 def request_assets():
-    """Запрос активов по выбранной дате"""
+    """
+    Запрос активов по выбранной дате
+    Принимаем только тип запроса FETCH, то есть добавление данных на страницу через JavaScript
+    """
+    # входящий запрос переводим в json структуру и ищем там ключ date,\
+    # где мы передали выбранную дату
     asset_date = request.json['date']
-    conn = get_db_connection()
+    conn = get_db_connection()  # открылис соедение к БД
+    # запрашиваем из БД активы по дате и айди пользователя из словаря сессий
+    # не стала переделывать на SQL Alchemy, чтобы продемонстрировать оба подхода обращения к БД
     requested_assets: sqlite3.Row = conn.execute('SELECT * FROM assets WHERE date = ? and id_user = ?',
                                                  (asset_date, session['id_user'])).fetchall()
-    conn.close()
+    conn.close() # закрываем соединение
+    # Чтобы потом легче было парсить результаты, полученные результаты перводим в лист, в котором лежат тюплы
     requested_assets = [tuple(asset) for asset in requested_assets]
+    # И переводим в JSON в тип данных str
     requested_assets = dumps(requested_assets)
-    return {'data': requested_assets}  # Заносим в словарь, так как на pythonanywhere ошибки, что мы возвращаем list
+    # Заносим в словарь, так как на pythonanywhere получали ошибки,
+    # котрые говорили, что нельзя обратно на JavaScript передавать list
+    return {'data': requested_assets}
 
 
 
 if __name__ == '__main__':
-    # Читаем секрет из файла
+    # Сложность с которой столкнулась - PythonAnyWhere не выполняет этот блок, потому что не проходит
+    # условие __name__ == '__main__', так как там для запуска проектов используется wsgi-сервер,
+    # который модули на flask импортирует как модуль
+    # Как решила - на pytohn anywhere при загрузке файла поменяла  условие __name__ == '__main__' на просто True
+
+    # Вызываем функуия чтения секрета из файла
+    # в ответ получаем была ли ошибка чтения секрета и в resp сохраняем текст ошибки, если она была
+    # или секретный ключ из файла
     err, resp = read_secret_key()
+    # Если в err записали ошибку, то завершаем выполнение программы с текстом ошибки
     if err:
         exit(resp)
     else:
+        # записываем в переменную секретный ключ
         secret_key = resp
+    # секретный ключ сохраняем в наш объект от класса Flask,
+    # это нужно для работы функционала сессий, без него не работает.
     app.secret_key = secret_key
-    app.config["SESSION_PERMANENT"] = False
 
+    # В контексте нашего приложения вызываем
+    # создание таблиц на SQLAclhemy подходе
+    # без использования контекста не работало
     with app.app_context():
-        #init_db() # создаем таблицы на чистом SQL подходе
-        init_db_alch() # создаем таблицы на SQLAclhemy подходе
+        init_db_alch()
     app.run(debug=True)
