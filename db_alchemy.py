@@ -9,10 +9,10 @@ class Parent(Base):
     __tablename__ = 'parent'
     id = Column(Integer, primary_key=True)
     children = relationship("Child")
-Так как не смогла сходу понять что за модель декларативная модель ORM у версии 2.0
+Так как не смогла сходу понять что за декларативная модель ORM у версии 2.0
 После этого, по документации "SQLAlchemy 2.0 - Major Migration Guide"
 https://docs.sqlalchemy.org/en/20/changelog/migration_20.html
-Выполнила миграпцию описания к модели версии 2.0 представленной в коде ниже
+Выполнила миграцию описания к модели версии 2.0 представленной в коде ниже
 """
 
 
